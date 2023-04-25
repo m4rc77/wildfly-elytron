@@ -55,7 +55,7 @@ public class ClientCredentialsProviderUtils {
                 }
             }
         }
-        log.debugf("Using provider '%s' for authentication of client '%s'", authenticatorId, clientId);
+        log.infof("Using provider '%s' for authentication of client '%s' (Patched version for Azure-AD)", authenticatorId, clientId);
 
         Map<String, ClientCredentialsProvider> authenticators = new HashMap<>();
         loadAuthenticators(authenticators, ClientCredentialsProviderUtils.class.getClassLoader());
