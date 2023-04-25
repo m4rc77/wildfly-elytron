@@ -83,7 +83,7 @@ public class TokenValidator {
             JwtClaims jwtClaims = new JwtConsumerBuilder().setSkipSignatureVerification().setSkipAllValidators().build().processToClaims(accessToken);
             return new VerifiedTokens(new IDToken(idJwtClaims), new AccessToken(jwtClaims));
         } catch (InvalidJwtException e) {
-            log.tracef("Problem parsing ID token: " + idToken, e);
+            log.warnf("Failed to parse ID token. Details:\n%s", getErrorDetailsWithoutSecrets(e));
             throw log.invalidIDToken(e);
         }
     }
@@ -113,9 +113,20 @@ public class TokenValidator {
             }
             return new AccessToken(jwtClaims);
         } catch (InvalidJwtException e) {
-            log.tracef("Problem parsing bearer token: " + bearerToken, e);
+            log.warnf("Failed to parse bearer token. Details:\n%s", getErrorDetailsWithoutSecrets(e));
             throw log.invalidBearerToken(e);
         }
+    }
+
+    private String getErrorDetailsWithoutSecrets(InvalidJwtException e) {
+        StringBuilder details = new StringBuilder();
+        details.append(" --> ").append(e.getClass()).append(": ").append(e.getMessage()).append("\n");
+        Throwable t = e.getCause();
+        while (t != null) {
+            details.append(" --> ").append(t.getClass()).append(": ").append(t.getMessage()).append("\n");
+            t = t.getCause();
+        }
+        return details.toString();
     }
 
     private JwtContext setVerificationKey(final String token, final JwtConsumerBuilder jwtConsumerBuilder) throws InvalidJwtException {
@@ -275,7 +286,10 @@ public class TokenValidator {
                 valid = jwtClaims.getStringClaimValue(TYPE).equals(expectedType);
             }
             if (! valid) {
+                log.warnf("Expected claim '%s' with value '%s' not found!", TYPE, expectedType);
                 return new ErrorCodeValidator.Error(INVALID_TYPE_CLAIM, log.unexpectedValueForTypeClaim());
+            } else {
+                log.debugf("Expected claim '%s' with value '%s' found.", TYPE, expectedType);
             }
             return null;
         }

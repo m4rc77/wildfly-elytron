@@ -18,6 +18,7 @@
 
 package org.wildfly.security.http.oidc;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ public class AccessToken extends JsonWebToken {
     private static final String ALLOWED_ORIGINS = "allowed-origins";
     private static final String REALM_ACCESS = "realm_access";
     private static final String RESOURCE_ACCESS = "resource_access";
+    private static final String ROLES = "roles";
     private static final String TRUSTED_CERTS = "trusted-certs";
 
     /**
@@ -52,6 +54,45 @@ public class AccessToken extends JsonWebToken {
      */
     public List<String> getAllowedOrigins() {
         return getStringListClaimValue(ALLOWED_ORIGINS);
+    }
+
+    /**
+     * Get the roles claim from Azure-AD and other OIDC providers.
+     *
+     * @return the roles claim
+     */
+    public List<String> getAADRoles() {
+        // Azure-AD:
+        // "roles": [
+        //    "my_role_user",
+        //    "my_role_admin"
+        //   ]
+
+        // KC:
+        // "resource_access": {
+        //    "realm-management": {
+        //      "roles": [
+        //        ...
+        //      ]
+        //    },
+        //    "my-client": {
+        //      "roles": [
+        //        "my_role_user",
+        //        "my_role_admin"
+        //      ]
+        //    },
+        //    "account": {
+        //      "roles": [
+        //        ...
+        //      ]
+        //    }
+        //  },
+
+        if (hasClaim(ROLES)) {
+            return getStringListClaimValue(ROLES);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     /**

@@ -23,6 +23,7 @@ import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.wildfly.security.auth.SupportLevel;
@@ -110,6 +111,15 @@ public class OidcSecurityRealm implements SecurityRealm {
             RealmAccessClaim resourceAccessClaim = accessToken.getResourceAccessClaim(oidcClientConfig.getResourceName());
             if (resourceAccessClaim != null) {
                 roles.addAll(resourceAccessClaim.getRoles());
+            }
+
+            // If 'ressource_access' claim is not found or empty, maybe we can find the list of roles
+            // in the claim 'roles' which is used for example in Azure-AD and other OIDC providers
+            List<String> aadRoles = accessToken.getAADRoles();
+            if (resourceAccessClaim == null && aadRoles.size() > 0) {
+                log.infof("Azure-AD detected: Using claim 'roles' instead of 'resource_access' to get list of roles. " +
+                        "User '%s' has the following roles %s.", accessToken.getPreferredUsername(), aadRoles);
+                roles.addAll(aadRoles);
             }
         }
         if (oidcClientConfig.isUseRealmRoleMappings()) {
