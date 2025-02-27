@@ -91,7 +91,7 @@ public class HttpClientBuilder {
     private TimeUnit connectionTimeToLiveUnit = TimeUnit.MILLISECONDS;
     private long socketTimeout = -1;
     private TimeUnit socketTimeoutUnits = TimeUnit.MILLISECONDS;
-    private long establishConnectionTimeout = -1;
+    private long establishConnectionTimeout = 10_000;
     private TimeUnit establishConnectionTimeoutUnits = TimeUnit.MILLISECONDS;
 
     /**
@@ -196,6 +196,7 @@ public class HttpClientBuilder {
                     .build();
             HttpClientConnectionManager connectionManager;
             if (connectionPoolSize > 0) {
+                log.info("connectionPoolSize is " + connectionPoolSize + " ... enable PoolingHttpClientConnectionManager");
                 PoolingHttpClientConnectionManager pcm = new PoolingHttpClientConnectionManager(registry, null, null, null, connectionTimeToLive, connectionTimeToLiveUnit);
                 pcm.setMaxTotal(connectionPoolSize);
                 if (maxPooledPerRoute == 0) maxPooledPerRoute = connectionPoolSize;
@@ -203,6 +204,7 @@ public class HttpClientBuilder {
                 connectionManager = pcm;
 
             } else {
+                log.info("connectionPoolSize is " + connectionPoolSize + " ... enable BasicHttpClientConnectionManager (no pooling)");
                 connectionManager = new BasicHttpClientConnectionManager(registry);
             }
 
@@ -214,9 +216,11 @@ public class HttpClientBuilder {
                 requestConfigBuilder.setProxy(proxyHost);
             }
             if (socketTimeout > -1) {
+                log.info("Setting socketTimeout to " + socketTimeout  +"ms");
                 requestConfigBuilder.setSocketTimeout((int) socketTimeoutUnits.toMillis(socketTimeout));
             }
             if (establishConnectionTimeout > -1) {
+                log.info("Setting establishConnectionTimeout to " + establishConnectionTimeout  +"ms");
                 requestConfigBuilder.setConnectTimeout((int) establishConnectionTimeoutUnits.toMillis(establishConnectionTimeout));
             }
             clientBuilder.setDefaultRequestConfig(requestConfigBuilder.build());
@@ -272,7 +276,7 @@ public class HttpClientBuilder {
             }
         }
         int size = 10;
-        if (oidcClientConfig.getConnectionPoolSize() > 0) {
+        if (oidcClientConfig.getConnectionPoolSize() >= 0) {
             size = oidcClientConfig.getConnectionPoolSize();
         }
         HttpClientBuilder.HostnameVerificationPolicy policy = HttpClientBuilder.HostnameVerificationPolicy.WILDCARD;
