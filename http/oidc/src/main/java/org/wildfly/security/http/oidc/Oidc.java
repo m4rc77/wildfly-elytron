@@ -230,6 +230,7 @@ public class Oidc {
                 }
             }
         } catch (IOException e) {
+            log.error("Failed to send JSON HTTP request to " + httpRequest.getURI() + "! Error: " + e);
             throw log.unexpectedErrorSendingRequestToOidcProvider(e);
         }
     }
