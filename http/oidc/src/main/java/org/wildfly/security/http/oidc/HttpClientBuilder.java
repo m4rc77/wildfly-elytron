@@ -89,10 +89,12 @@ public class HttpClientBuilder {
     private SSLContext sslContext;
     private long connectionTimeToLive = -1;
     private TimeUnit connectionTimeToLiveUnit = TimeUnit.MILLISECONDS;
-    private long socketTimeout = -1;
+    private long socketTimeout = 15_000;
     private TimeUnit socketTimeoutUnits = TimeUnit.MILLISECONDS;
     private long establishConnectionTimeout = 10_000;
     private TimeUnit establishConnectionTimeoutUnits = TimeUnit.MILLISECONDS;
+    private long connectionRequestTimeout = 20_000;
+    private TimeUnit connectionRequestTimeoutUnits = TimeUnit.MILLISECONDS;
 
     /**
      * This should only be set if you cannot or do not want to verify the identity of the
@@ -216,13 +218,22 @@ public class HttpClientBuilder {
                 requestConfigBuilder.setProxy(proxyHost);
             }
             if (socketTimeout > -1) {
-                log.info("Setting socketTimeout to " + socketTimeout  +"ms");
+                // **socketTimeout** max time gap between two consecutive data packets while transferring data from server to client.
+                log.info("Setting socketTimeout to " + socketTimeout + "ms");
                 requestConfigBuilder.setSocketTimeout((int) socketTimeoutUnits.toMillis(socketTimeout));
             }
             if (establishConnectionTimeout > -1) {
-                log.info("Setting establishConnectionTimeout to " + establishConnectionTimeout  +"ms");
+                // **connectTimeout** time to wait for getting a connection from the connection manager/pool
+                log.info("Setting establishConnectionTimeout to " + establishConnectionTimeout + "ms");
                 requestConfigBuilder.setConnectTimeout((int) establishConnectionTimeoutUnits.toMillis(establishConnectionTimeout));
             }
+
+            if (connectionRequestTimeout > -1) {
+                // **connectionRequestTimeout** is the timeout used when requesting a connection from the connection manager.
+                log.info("Setting connectionRequestTimeout (used when requesting a connection from manager/pool) to " + connectionRequestTimeout  +"ms");
+                requestConfigBuilder.setConnectionRequestTimeout((int) connectionRequestTimeoutUnits.toMillis(connectionRequestTimeout));
+            }
+
             clientBuilder.setDefaultRequestConfig(requestConfigBuilder.build());
             if (disableCookieCache) {
                 clientBuilder.setDefaultCookieStore(new CookieStore() {
